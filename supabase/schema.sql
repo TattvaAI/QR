@@ -32,6 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_students_roll_number ON students(roll_number);
 CREATE INDEX IF NOT EXISTS idx_students_totp_secret ON students(totp_secret);
 CREATE INDEX IF NOT EXISTS idx_access_logs_student_id ON access_logs(student_id);
 CREATE INDEX IF NOT EXISTS idx_access_logs_scanned_at ON access_logs(scanned_at DESC);
+CREATE INDEX IF NOT EXISTS idx_access_logs_replay_protection ON access_logs(student_id, guard_note);
 CREATE INDEX IF NOT EXISTS idx_access_logs_replay_protection ON access_logs(student_id, token_used);
 
 -- Function to update updated_at timestamp
