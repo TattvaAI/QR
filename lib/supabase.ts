@@ -40,13 +40,17 @@ export async function getStudentBySecret(secret: string): Promise<Student | null
     return data;
 }
 
-export async function logAccess(studentId: string, status: 'GRANTED' | 'DENIED'): Promise<void> {
+export async function logAccess(studentId: string, status: 'GRANTED' | 'DENIED', tokenUsed?: string): Promise<void> {
     try {
         await supabase
             .from('access_logs')
-            .insert({ student_id: studentId, status });
+            .insert({ 
+                student_id: studentId, 
+                status,
+                guard_note: tokenUsed // Storing token in guard_note to avoid migration
+            });
     } catch (e) {
-        console.error("Logging failed - access_logs table might not exist:", e);
+        console.error("Logging failed:", e);
     }
 }
 

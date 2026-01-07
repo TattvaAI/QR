@@ -44,17 +44,31 @@ export async function verifyToken(qrString: string): Promise<VerificationResult>
         authenticator.options = { window: 1, step: 30 };
         const isValid = authenticator.check(token, student.secret_key);
 
-        if (isValid) {
-            // 4. Log Access
-            await logAccess(student.id, 'GRANTED');
-            return {
-                success: true,
-                studentName: student.name
-            };
-        } else {
-            await logAccess(student.id, 'DENIED');
+        if (!isValid) {
+            await logAccess(student.id, 'DENIED', token);
             return { success: false, error: "Invalid Token" };
         }
+
+        // 4. SECURITY CHECK: Replay Protection
+        const { count, error: countError } = await supabase
+            .from('access_logs')
+            .select('*', { count: 'exact', head: true })
+            .eq('student_id', student.id)
+            .eq('guard_note', token)
+            .eq('status', 'GRANTED');
+
+        if (countError) {
+            console.error("Replay check error:", countError);
+        } else if (count && count > 0) {
+            return { success: false, error: "DUPLICATE ENTRY" };
+        }
+
+        // 5. Log Access & Grant
+        await logAccess(student.id, 'GRANTED', token);
+        return {
+            success: true,
+            studentName: student.name
+        };
     } catch (error) {
         console.error("Verification Error:", error);
         return { success: false, error: "Server Error" };

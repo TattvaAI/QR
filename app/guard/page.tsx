@@ -4,7 +4,7 @@ import { useState } from "react";
 import QRScanner from "@/app/components/qr-scanner";
 import { verifyToken } from "./actions";
 
-type ScanStatus = "IDLE" | "VERIFYING" | "GRANTED" | "DENIED";
+type ScanStatus = "IDLE" | "VERIFYING" | "GRANTED" | "DENIED" | "REPLAYED";
 
 export default function GuardPage() {
     const [status, setStatus] = useState<ScanStatus>("IDLE");
@@ -23,6 +23,9 @@ export default function GuardPage() {
                 setStatus("GRANTED");
                 // Auto-reset after 3 seconds to see the name longer
                 setTimeout(() => setStatus("IDLE"), 3000);
+            } else if (res.error === "DUPLICATE ENTRY") {
+                setStatus("REPLAYED");
+                setTimeout(() => setStatus("IDLE"), 4000);
             } else {
                 setStatus("DENIED");
                 setTimeout(() => setStatus("IDLE"), 2000);
@@ -66,6 +69,20 @@ export default function GuardPage() {
                     <div className="text-black text-center space-y-4">
                         <h1 className="text-8xl font-black tracking-tighter uppercase">ACCESS<br />DENIED</h1>
                         <p className="text-2xl font-mono tracking-[0.5em] font-bold">{result.error || "INVALID TOKEN"}</p>
+                    </div>
+                </div>
+            )}
+
+            {/* REPLAY WARNING */}
+            {status === "REPLAYED" && (
+                <div className="fixed inset-0 z-50 bg-orange-500 flex items-center justify-center border-[20px] border-black">
+                    <div className="text-black text-center space-y-4">
+                        <div className="text-9xl font-black">⚠️</div>
+                        <h1 className="text-7xl font-black tracking-tighter uppercase leading-none">ALREADY<br />SCANNED</h1>
+                        <div className="bg-black text-orange-500 px-6 py-2 inline-block font-mono text-xl font-bold rounded">
+                            REPLAY ATTACK DETECTED
+                        </div>
+                        <p className="text-xl font-mono font-bold uppercase pt-4">Token Voided</p>
                     </div>
                 </div>
             )}

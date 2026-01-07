@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS access_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     student_id UUID REFERENCES students(id) ON DELETE CASCADE,
     status VARCHAR(10) NOT NULL CHECK (status IN ('GRANTED', 'DENIED')),
-    guard_note TEXT,
+    guard_note TEXT, -- CURRENTLY USED TO STORE TOTP TOKEN FOR REPLAY PROTECTION
     scanned_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -32,6 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_students_roll_number ON students(roll_number);
 CREATE INDEX IF NOT EXISTS idx_students_totp_secret ON students(totp_secret);
 CREATE INDEX IF NOT EXISTS idx_access_logs_student_id ON access_logs(student_id);
 CREATE INDEX IF NOT EXISTS idx_access_logs_scanned_at ON access_logs(scanned_at DESC);
+CREATE INDEX IF NOT EXISTS idx_access_logs_replay_protection ON access_logs(student_id, token_used);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
