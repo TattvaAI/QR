@@ -8,38 +8,41 @@ type ScanStatus = "IDLE" | "VERIFYING" | "GRANTED" | "DENIED";
 
 export default function GuardPage() {
     const [status, setStatus] = useState<ScanStatus>("IDLE");
-    const [lastScanned, setLastScanned] = useState<string>("");
+    const [result, setResult] = useState<{ name?: string; error?: string }>({});
 
     const handleScan = async (data: string | null) => {
         if (!data || status !== "IDLE") return;
 
-        // Simple debounce to prevent duplicate processing of the same code instantly
-        // In a real app we'd track IDs
-        // if (data === lastScanned && status === 'IDLE') return;
-
         setStatus("VERIFYING");
-        setLastScanned(data);
 
         try {
-            const isValid = await verifyToken(data);
-            if (isValid) {
+            const res = await verifyToken(data);
+            setResult({ name: res.studentName, error: res.error });
+            
+            if (res.success) {
                 setStatus("GRANTED");
-                // Auto-reset after 2 seconds
-                setTimeout(() => setStatus("IDLE"), 2000);
+                // Auto-reset after 3 seconds to see the name longer
+                setTimeout(() => setStatus("IDLE"), 3000);
             } else {
                 setStatus("DENIED");
                 setTimeout(() => setStatus("IDLE"), 2000);
             }
         } catch (e) {
             console.error(e);
+            setResult({ error: "System Error" });
             setStatus("DENIED");
             setTimeout(() => setStatus("IDLE"), 2000);
         }
     };
 
-    // DEBUGGING: Manual entry if camera fails or for testing
-    const [manualCode, setManualCode] = useState("");
-    const handleManualVerify = () => handleScan(manualCode);
+    // Manual entry state
+    const [manualRoll, setManualRoll] = useState("");
+    const [manualToken, setManualToken] = useState("");
+    
+    const handleManualVerify = () => {
+        const qrString = JSON.stringify({ roll: manualRoll, token: manualToken });
+        handleScan(qrString);
+    };
 
     return (
         <main className="min-h-screen bg-black relative overflow-hidden flex flex-col items-center justify-center p-4">
@@ -49,7 +52,10 @@ export default function GuardPage() {
                 <div className="fixed inset-0 z-50 bg-neon-green flex items-center justify-center animate-pulse">
                     <div className="text-black text-center space-y-4">
                         <h1 className="text-8xl font-black tracking-tighter uppercase">ACCESS<br />GRANTED</h1>
-                        <p className="text-2xl font-mono tracking-[0.5em] font-bold">IDENTITY VERIFIED</p>
+                        <p className="text-3xl font-mono tracking-widest font-black border-y-2 border-black py-2">
+                            {result.name?.toUpperCase()}
+                        </p>
+                        <p className="text-xl font-mono tracking-[0.5em] font-bold">IDENTITY VERIFIED</p>
                     </div>
                 </div>
             )}
@@ -59,7 +65,7 @@ export default function GuardPage() {
                 <div className="fixed inset-0 z-50 bg-neon-red flex items-center justify-center animate-pulse">
                     <div className="text-black text-center space-y-4">
                         <h1 className="text-8xl font-black tracking-tighter uppercase">ACCESS<br />DENIED</h1>
-                        <p className="text-2xl font-mono tracking-[0.5em] font-bold">INVALID TOKEN</p>
+                        <p className="text-2xl font-mono tracking-[0.5em] font-bold">{result.error || "INVALID TOKEN"}</p>
                     </div>
                 </div>
             )}
@@ -87,24 +93,31 @@ export default function GuardPage() {
                     <summary className="text-gray-700 text-xs cursor-pointer hover:text-gray-500 text-center font-mono">
                         [MANUAL OVERRIDE]
                     </summary>
-                    <div className="flex gap-2 mt-4">
+                    <div className="flex flex-col gap-2 mt-4">
                         <input
                             type="text"
-                            value={manualCode}
-                            onChange={(e) => setManualCode(e.target.value)}
-                            placeholder="Enter TOTP Token"
-                            className="flex-1 bg-gray-900 border border-gray-800 text-white px-4 py-3 rounded-lg font-mono focus:border-neon-blue outline-none"
-                            maxLength={6}
+                            value={manualRoll}
+                            onChange={(e) => setManualRoll(e.target.value)}
+                            placeholder="Roll Number"
+                            className="bg-gray-900 border border-gray-800 text-white px-4 py-3 rounded-lg font-mono focus:border-neon-blue outline-none uppercase"
                         />
-                        <button
-                            type="button"
-                            onClick={() => {
-                                handleScan(manualCode);
-                            }}
-                            className="bg-gray-800 hover:bg-neon-blue hover:text-black text-white px-6 py-3 rounded-lg font-bold transition-colors"
-                        >
-                            CHECK
-                        </button>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={manualToken}
+                                onChange={(e) => setManualToken(e.target.value)}
+                                placeholder="Token"
+                                className="flex-1 bg-gray-900 border border-gray-800 text-white px-4 py-3 rounded-lg font-mono focus:border-neon-blue outline-none"
+                                maxLength={6}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleManualVerify}
+                                className="bg-gray-800 hover:bg-neon-blue hover:text-black text-white px-6 py-3 rounded-lg font-bold transition-colors"
+                            >
+                                CHECK
+                            </button>
+                        </div>
                     </div>
                 </details>
             </div>

@@ -35,15 +35,19 @@ export async function getStudentBySecret(secret: string): Promise<Student | null
         .eq('totp_secret', secret)
         .eq('is_active', true)
         .single();
-    
+
     if (error) return null;
     return data;
 }
 
 export async function logAccess(studentId: string, status: 'GRANTED' | 'DENIED'): Promise<void> {
-    await supabase
-        .from('access_logs')
-        .insert({ student_id: studentId, status });
+    try {
+        await supabase
+            .from('access_logs')
+            .insert({ student_id: studentId, status });
+    } catch (e) {
+        console.error("Logging failed - access_logs table might not exist:", e);
+    }
 }
 
 export async function getAllStudents(): Promise<Student[]> {
@@ -52,10 +56,11 @@ export async function getAllStudents(): Promise<Student[]> {
         .select('*')
         .eq('is_active', true)
         .order('name');
-    
+
     if (error) return [];
     return data || [];
 }
+
 
 export async function getStudentById(id: string): Promise<Student | null> {
     const { data, error } = await supabase
@@ -63,7 +68,19 @@ export async function getStudentById(id: string): Promise<Student | null> {
         .select('*')
         .eq('id', id)
         .single();
-    
+
+    if (error) return null;
+    return data;
+}
+
+export async function getStudentByRoll(rollNumber: string): Promise<Student | null> {
+    const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .eq('roll_number', rollNumber)
+        .eq('is_active', true)
+        .single();
+
     if (error) return null;
     return data;
 }
