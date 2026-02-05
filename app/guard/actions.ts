@@ -33,8 +33,8 @@ export async function verifyToken(qrString: string): Promise<VerificationResult>
     try {
         const { data: student, error: studentError } = await supabase
             .from('students')
-            .select('id, name, totp_secret, photo_url')
-            .eq('roll_number', roll)
+            .select('id, name, secret_key, photo_url')
+            .eq('id', roll)
             .single();
 
         if (studentError || !student) {
@@ -43,7 +43,7 @@ export async function verifyToken(qrString: string): Promise<VerificationResult>
 
         // 3. Verify TOTP
         authenticator.options = { window: 1, step: 30 };
-        const isValid = authenticator.check(token, student.totp_secret);
+        const isValid = authenticator.check(token, student.secret_key);
 
         if (!isValid) {
             await logAccess(student.id, 'DENIED', token);
