@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+:root {
+  --background: #050505;
+  --foreground: #e0e0e0;
+  --neon-green: #39ff14;
+  --neon-red: #ff073a;
+  --neon-blue: #0ff0fc;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-neon-green: var(--neon-green);
+  --color-neon-red: var(--neon-red);
+  --color-neon-blue: var(--neon-blue);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-mono), monospace;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Utility for glitched text or scanlines can go here */
+.scanline {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(to bottom,
+      transparent 50%,
+      rgba(0, 0, 0, 0.5) 51%);
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.2;
+}
+
+/* QR Scanner overrides - force square aspect ratio */
+.qr-scanner-container > div {
+  height: 100% !important;
+  padding-top: 0 !important;
+  position: absolute !important;
+  inset: 0 !important;
+}
+
+.qr-scanner-container video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  -webkit-object-fit: cover !important;
+  min-height: 100% !important;
+  min-width: 100% !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+/* Safari specific fix */
+@supports (-webkit-touch-callout: none) {
+  .qr-scanner-container,
+  .qr-scanner-container > div,
+  .qr-scanner-container > div > div {
+    height: 100% !important;
+    min-height: 350px !important;
+    position: absolute !important;
+    inset: 0 !important;
+  }
+  
+  .qr-scanner-container video {
+    height: 350px !important;
+    min-height: 350px !important;
+  }
+}
